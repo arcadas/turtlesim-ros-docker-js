@@ -50,7 +50,7 @@ Start a container for Catkin:
 ```sh
 docker run -it \
     --net turtlesim \
-    --env ROS_HOSTNAME=ros-turtlesim-master \
+    --env ROS_HOSTNAME=ros-turtlesim-catkin \
     --env ROS_MASTER_URI=http://ros-turtlesim-master:11311 \
     -v ~/turtlesim/catkin_ws:/root/turtlesim/catkin_ws \
     --name ros-turtlesim-catkin \
@@ -118,7 +118,7 @@ Start a container for Client node:
 ```sh
 docker container run -it \
     --net turtlesim \
-    --env ROS_HOSTNAME=ros-turtlesim-master \
+    --env ROS_HOSTNAME=ros-turtlesim-client \
     --env ROS_MASTER_URI=http://ros-turtlesim-master:11311 \
     -v ~/turtlesim/catkin_ws:/root/turtlesim/catkin_ws \
     --name ros-turtlesim-client \
@@ -133,7 +133,7 @@ cd /root/turtlesim/catkin_ws/src/turtlesim/scripts
 python turtlesim-ros-node-client.py
 ```
 
-Check publisher node in the Catkin container:
+## Check publisher node in the Catkin container
 
 ```sh
 # Node list
@@ -158,3 +158,18 @@ rostopic echo /turtlesim_commands
 - Listener node (log)
 - JS container with roslibjs (draw)
 - docker user rights issue
+
+## Troubleshooting
+
+List all container IP addresses:
+
+```sh
+docker ps -q | xargs -n 1 docker inspect --format '{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}} {{ .Name }}' | sed 's/ \// /'
+```
+
+Install `ping` and `telnet` command:
+
+```sh
+apt-get update
+apt-get install -y iputils-ping telnet
+```
