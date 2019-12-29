@@ -10,7 +10,7 @@ Catkin: https://catkin-tools.readthedocs.io
 
 OS: Ubuntu 18.04.3 LTS \
 ROS: melodic \
-Docker version: 19.03 \
+Docker version: 19.03
 
 ## First steps
 
@@ -58,18 +58,20 @@ docker run -it \
     /bin/bash
 ```
 
-Catkin setup:
+Catkin setup in the container:
 
 ```sh
 # Environment setup
 source /opt/ros/melodic/setup.bash
 # Build Catkin
+cd /root/turtlesim/catkin_ws
+mkdir src
 catkin_make
 # Devel environment setup
 source devel/setup.bash
 # Create package with rospy and std_msg
 cd src/
-catkin_create_pkg turtlesim rospy std_msg
+catkin_create_pkg turtlesim rospy std_msgs
 cd ..
 # Rebuild Catkin
 catkin_make
@@ -81,6 +83,8 @@ Create node py file on the host computer in the project directory:
 
 ```sh
 cd ~/turtlesim/catkin_ws/src/turtlesim/
+# TODO - set up proper user rights
+sudo chmod -R 777 turtlesim
 mkdir scripts
 cd scripts
 touch turtlesim-ros-node-client.py
@@ -97,7 +101,7 @@ import rospy
 from std_msgs.msg import String
 
 if __name__ == '__main__':
-    rospy.init_node('turtlesim-client')
+    rospy.init_node('turtlesim_client')
     rospy.loginfo("Turtlesim Client node has been started")
     pub = rospy.Publisher("/turtlesim_commands", String, queue_size=10)
     rate = rospy.Rate(2)
@@ -125,21 +129,24 @@ docker container run -it \
 Start the Client node:
 
 ```sh
-cd /root/turtlesim/catkin_ws/src/my_robot_tutorials/scripts
-python my_first_node.py
+cd /root/turtlesim/catkin_ws/src/turtlesim/scripts
+python turtlesim-ros-node-client.py
 ```
 
 Check publisher node in the Catkin container:
 
 ```sh
 # Node list
-# /turtlesim-client
+# /turtlesim_client
 rosnode list
+
 # Node info
-rosnode info /turtlesim-client
+rosnode info /turtlesim_client
+
 # List active topics
 # /turtlesim_commands
 rostopic list
+
 # Echo publicher messages
 # TODO - Commands from STDIN
 rostopic echo /turtlesim_commands
@@ -150,3 +157,4 @@ rostopic echo /turtlesim_commands
 - stdin for commands
 - Listener node (log)
 - JS container with roslibjs (draw)
+- docker user rights issue
