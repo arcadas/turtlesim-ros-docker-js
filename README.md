@@ -1,5 +1,7 @@
 # ROS TurtleSim with Docker and JS
 
+![turtlesim-docker-architecture](turtlesim.png)
+
 ## Documentation
 
 ROS: http://wiki.ros.org/ROS/Introduction \
