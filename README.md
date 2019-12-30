@@ -110,7 +110,7 @@ vim turtlesim-ros-node-client.py
 
 Edit: [turtlesim-ros-node-client.py](catkin_ws/src/turtlesim/scripts/turtlesim-ros-node-client.py)
 
-***Note:** In ROS, nodes are uniquely named. If two nodes with the same name are launched, the previous one is kicked off. The anonymous=True flag means that rospy will choose a unique name for our node so that multiple node can run simultaneously. E.g.: `rospy.init_node('name_of_the_node', anonymous=True)` and the name will be `name_of_the_node_<random_numbers>`.*
+> Note: In ROS, nodes are uniquely named. If two nodes with the same name are launched, the previous one is kicked off. The anonymous=True flag means that rospy will choose a unique name for our node so that multiple node can run simultaneously. E.g.: `rospy.init_node('name_of_the_node', anonymous=True)` and the name will be `name_of_the_node_<random_numbers>`.
 
 Start a container for Client node:
 
@@ -234,8 +234,6 @@ Run rosbridge:
 ```sh
 rosrun rosbridge_server rosbridge_websocket
 ```
-
-TODO: create a rosbridge image.
 
 ## Webserver
 
