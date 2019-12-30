@@ -8,7 +8,7 @@ ROS ([Robot Operating System](http://wiki.ros.org/ROS/Introduction)) is an open-
 
 [Roslibjs](http://wiki.ros.org/roslibjs) is the core JavaScript library for interacting with ROS from the browser. It uses WebSockets to connect with rosbridge.
 
-This projects are released as part of the [Robot Web Tools](http://robotwebtools.org/) effort.
+`Rosbridge` and `roslibjs` are released as part of the [Robot Web Tools](http://robotwebtools.org/) effort.
 
 [Turtlesim](http://wiki.ros.org/turtlesim) is a tool made for teaching ROS and ROS packages.
 
