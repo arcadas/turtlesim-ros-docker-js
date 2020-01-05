@@ -26,17 +26,16 @@ OS: Ubuntu 18.04.3 LTS \
 ROS: melodic \
 Docker version: 19.03
 
-## First steps
-
-Create a project directory:
+## Create a project directory
 
 ```sh
 cd ~
 mkdir turtlesim
 ```
 
-Create a Docker network:
+## ROS master node
 
+First we need a private Docker network for Turtlesim:
 ```sh
 docker network create turtlesim
 ```
@@ -51,9 +50,9 @@ docker container run -dit \
     roscore
 ```
 
-## Catkin
+## Catkin Workspace
 
-Create a Catkin workspace on host computer in the project directory:
+On host computer in the project directory:
 
 ```sh
 mkdir catkin_ws
@@ -85,32 +84,205 @@ catkin_make
 
 # Devel environment setup
 source devel/setup.bash
+```
 
+## Turtlesim package
+
+```sh
 # Create package with rospy and std_msg
 cd src/
 catkin_create_pkg turtlesim rospy std_msgs
+
+# TODO - set up proper user rights
+sudo chmod -R 777 turtlesim
+mkdir scripts
 cd ..
 
 # Rebuild Catkin
 catkin_make
 ```
 
-## Client (Publisher) Node
+## Parameters with launch file
+
+Documentation: [Parameter server](http://wiki.ros.org/Parameter%20Server), [Launch](http://wiki.ros.org/roslaunch)
+
+In Catkin container:
+
+```sh
+cd ~/turtlesim/catkin_ws
+catkin_create_pkg turtlesim_init
+cd ..
+catkin_make
+cd src/turtlesim_init
+mkdir launch && cd launch
+vim turtlesim.launch
+```
+
+Edit launch file:
+
+```xml
+<launch>
+    <param name="/velocity" type="int" value="50" />
+    <param name="/bg_color_b" type="int" value="255" />
+    <param name="/bg_color_g" type="int" value="255" />
+    <param name="/bg_color_r" type="int" value="255" />
+</launch>
+```
+
+> You can also set and get params from CLI. Help: `rosparam -h`. But be aware that all params are removing when ROS master restarted.
+
+Start launch file:
+
+```sh
+roslaunch turtlesim_init tutlesim.launch
+```
+
+> Note: ROS launch also start a ROS master if it does not exist.
+
+## Service (srv) files
+
+Documentation: [ROS Services](http://wiki.ros.org/Services), [srv files](http://wiki.ros.org/srv).
+
+Create service (srv) files:
+
+```sh
+cd ~/turtlesim/catkin_ws/src/turtlesim
+mkdir srv && cd srv
+vim Velocity.srv
+vim BgColor.srv
+```
+
+Velocity.srv:
+
+```txt
+uint8 velocity
+---
+bool
+```
+
+BgColor.srv:
+
+```txt
+uint8 bg_color_b
+uint8 bg_color_g
+uint8 bg_color_r
+---
+bool
+```
+
+Primitive types: [http://wiki.ros.org/msg](http://wiki.ros.org/msg)
+
+Config package.xml and CMakeLists.txt:
+
+```sh
+cd ~/turtlesim/catkin_ws/src/turtlesim
+vim package.xml
+vim CMakeLists.txt
+```
+
+In package.xml:
+
+```xml
+<!-- Add after last <build_depend> line -->
+<build_depend>message_generation</build_depend>
+<!-- Add after last <exec_depend> line -->
+<exec_depend>message_runtime</exec_depend>
+```
+
+In CMakeLists.txt:
+
+```sh
+# Add message_generation package
+find_package(
+  # Other packages
+  message_generation
+)
+# Uncomment add_service_files and change the .srv lines
+add_service_files(
+    FILES
+    Velocity.srv
+    BgColor.srv
+)
+# Uncomment generate_messages
+generate_messages(
+  # Messages
+)
+# Uncomment the CATKIN_DEPENDS line
+catkin_package(
+  # Other packages
+  CATKIN_DEPENDS ... message_runtime
+  # Other packages
+)
+```
+
+Build service files:
+
+```sh
+cd ~/turtlesim/catkin_ws
+catkin_make
+```
+
+## Service (server) node
 
 Create node py file on the host computer in the project directory:
 
 ```sh
-cd ~/turtlesim/catkin_ws/src
-# TODO - set up proper user rights
-sudo chmod -R 777 turtlesim
-mkdir scripts
-cd scripts
+cd ~/turtlesim/catkin_ws/src/scripts
+vim turtlesim-ros-node-service.py
+```
+
+Edit: [turtlesim-ros-node-service.py](catkin_ws/src/turtlesim/scripts/turtlesim-ros-node-service.py)
+
+> Note: In ROS, nodes are uniquely named. If two nodes with the same name are launched, the previous one is kicked off. The anonymous=True flag means that rospy will choose a unique name for our node so that multiple node can run simultaneously. E.g.: `rospy.init_node('name_of_the_node', anonymous=True)` and the name will be `name_of_the_node_<random_numbers>`.
+
+Start a container for Service node:
+
+```sh
+docker container run -it \
+    --net turtlesim \
+    --env ROS_HOSTNAME=ros-turtlesim-service \
+    --env ROS_MASTER_URI=http://ros-turtlesim-master:11311 \
+    -v ~/turtlesim/catkin_ws:/root/turtlesim/catkin_ws \
+    --name ros-turtlesim-service \
+    ros:melodic-ros-base \
+    /bin/bash
+```
+
+Start the Service node:
+
+```sh
+cd /root/turtlesim/catkin_ws/src/turtlesim/scripts
+python turtlesim-ros-node-service.py
+```
+
+> TODO: Try run node with rosrun (With and without .py):
+`rosrun turtlesim turtlesim-ros-node-service.py`.
+
+List and info service server:
+
+```sh
+rosservice list
+rosservice info /bg_color
+```
+
+Call service server manually:
+
+```sh
+rosservice call /bg_color "bg_color_g: 255
+bg_color_b: 255
+bg_color_r: 255"
+```
+
+## Client (Publisher and Service client) Node
+
+Create node py file on the host computer in the project directory:
+
+```sh
+cd ~/turtlesim/catkin_ws/src/scripts
 vim turtlesim-ros-node-client.py
 ```
 
 Edit: [turtlesim-ros-node-client.py](catkin_ws/src/turtlesim/scripts/turtlesim-ros-node-client.py)
-
-> Note: In ROS, nodes are uniquely named. If two nodes with the same name are launched, the previous one is kicked off. The anonymous=True flag means that rospy will choose a unique name for our node so that multiple node can run simultaneously. E.g.: `rospy.init_node('name_of_the_node', anonymous=True)` and the name will be `name_of_the_node_<random_numbers>`.
 
 Start a container for Client node:
 
@@ -264,6 +436,24 @@ docker container run -d \
 Check the webserver: [http://<host_ip>:8084](http://localhost:8084).
 
 ![turtlesim-inprogress](turtlesim_inprogress.png)
+
+## ROS Bag
+
+You can record and replay a topic stream by [rosbag](http://wiki.ros.org/rosbag).
+
+```sh
+rosbag -h
+rosbag record /turtlesim/<topic_name>
+rosbag info <rosbag_filename>.bag
+rosbag play <rosbag_filename>.bag
+```
+
+## ROS Action
+
+In some cases, however, if the service takes a long time to execute, the user might want the ability to cancel the request during execution or get periodic feedback about how the request is progressing.
+Parts: ActionClient, ActionServer and Action. Action Specification: Goal, Feedback, Result.
+
+Further information: [actionlib](http://wiki.ros.org/actionlib).
 
 ## Troubleshooting
 
